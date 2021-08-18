@@ -1,0 +1,106 @@
+---
+title: "FTA First Hearing"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(DT)
+events <- readRDS("output/full_scrape_20210812/events.rds")
+judgments <- readRDS("output/full_scrape_20210812/judgments.rds")
+flat_file <- readRDS("output/full_scrape_20210812/flat_file.rds")
+```
+#### [Flat File Index](index.html)
+
+## Making the FTA First Hearing Variable
+
+### Some context for the events table.
+
+The result variable from the events table contains the following values.
+
+```{r }
+events %>% 
+  group_by(result) %>% 
+  summarise(n=n()) %>% 
+  arrange(desc(n)) %>% 
+  datatable(options = list(columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+```
+
+The title variable of the events table has more varied values.  If filtered for only hearings it contains the following hearing types. 
+
+```{r }
+events %>% 
+  filter(grepl("hearing", title, ignore.case = TRUE)) %>%
+  group_by(title) %>% 
+  summarise(n=n()) %>% 
+  arrange(desc(n)) %>% 
+  datatable(options = list(columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+```
+
+```{r }
+events %>% 
+  filter(grepl("hearing", title, ignore.case = TRUE)) %>%
+  group_by(title, result) %>% 
+  summarise(n=n()) %>% 
+  arrange(desc(n)) %>% 
+  datatable(options = list(columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+```
+
+### Step 1. Filter events for hearings and add variable that shows true/false if it is the first hearing to occur in the case.
+
+```{r }
+events %>%
+  filter(grepl("hearing", title, ignore.case = TRUE)) %>%
+  mutate(firstHearing = !duplicated(case_code)) %>% 
+  datatable(options = list(columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+```
+
+### Step 2. Filter only first hearings and instances where the result contains the text FTA or Failure to Appear.
+
+```{r }
+events %>%
+  filter(grepl("hearing", title, ignore.case = TRUE)) %>%
+  mutate(firstHearing = !duplicated(case_code)) %>%
+  select(firstHearing, case_code, title, result) %>%
+  filter(firstHearing == "TRUE") %>%
+  filter(grepl("FTA|Failure to Appear", result, ignore.case = TRUE)) %>% 
+  datatable(options = list(columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+```
+
+This gives a table of all cases where FTA is declared after the first hearing.  
+
+### Step 3. Join FTA First Hearing Variable with Judgments table - to make sure they make sense compared to final judgment.
+
+```{r }
+events %>%
+  filter(grepl("hearing", title, ignore.case = TRUE)) %>%
+  mutate(firstHearing = !duplicated(case_code)) %>%
+  select(firstHearing, case_code, title, result) %>%
+  filter(firstHearing == "TRUE") %>%
+  filter(grepl("FTA|Failure to Appear", result, ignore.case = TRUE)) %>% 
+  inner_join(judgments, by = "case_code") %>% 
+  datatable(options = list(columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+```
+
+### Step 4. Filter all instances of FTA First Hearing and General Judgment.
+
+```{r }
+events %>%
+  filter(grepl("hearing", title, ignore.case = TRUE)) %>%
+  mutate(firstHearing = !duplicated(case_code)) %>%
+  select(firstHearing, case_code, title, result) %>%
+  filter(firstHearing == "TRUE") %>%
+  filter(grepl("FTA|Failure to Appear", result, ignore.case = TRUE)) %>% 
+  inner_join(judgments, by = "case_code") %>% 
+  filter(case_type == "Judgment - General" |
+           case_type == "Amended Judgment - General" |
+           case_type == "Amended Judgment - Corrected General" |
+           case_type == "Judgment - Corrected General" |
+           case_type == "Judgment - General Creates Lien" |
+           case_type == "Amended Judgment - General Creates Lien" |
+           case_type == "Judgment - Corrected General Creates Lien") %>% 
+  datatable(options = list(columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+```
+
+

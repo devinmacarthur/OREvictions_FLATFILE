@@ -1,0 +1,77 @@
+---
+title: "Who the Judgment is For"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(DT)
+events <- readRDS("output/full_scrape_20210812/events.rds")
+judgments <- readRDS("output/full_scrape_20210812/judgments.rds")
+flat_file <- readRDS("output/full_scrape_20210812/flat_file.rds")
+case_parties <- readRDS("output/full_scrape_20210812/case_parties.rds")
+```
+#### [Flat File Index](index.html)
+
+### A note on 'who the judgment is for'
+
+It is difficult to tell from the raw data who the judgment is for.  We have been working under the assumption that judgment general is in favor of landlord.
+
+There is a variable in the judgments table called party, but it is not clear whether this tells us who won the case.
+
+If we join the judgments table to the case_parties table, we can compare name from case_parties and party from judgments to see whether the party from judgments is referencing the Plaintiff or Defendant.   
+
+### The following table is a smaple of cases where name from case_parties and party from judgments are the same.
+
+``` {r }
+judgments %>%
+  filter(!is.na(party)) %>% 
+  select(case_code, case_type, decision, party) %>% 
+  inner_join(case_parties %>% select(case_code, name, party_side), 
+             by = c("case_code")) %>% 
+  filter(party == name) %>% 
+  datatable(options = list(columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+```
+
+### The following are the judgment case_type for parties where Defendants are listed. 
+
+``` {r }
+judgments %>%
+  filter(!is.na(party)) %>% 
+  select(case_code, case_type, decision, party) %>% 
+  inner_join(case_parties %>% select(case_code, name, party_side), 
+             by = c("case_code")) %>% 
+  filter(party == name & party_side == "Defendant") %>% 
+  group_by(case_type) %>%
+  summarise(n=n()) %>%
+  arrange(desc(n)) %>%
+  datatable(options = list(columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+```
+
+### The following is table where only Plaintiffs are referenced in the judjments' party variable. 
+
+``` {r }
+judgments %>%
+  filter(!is.na(party)) %>% 
+  select(case_code, case_type, decision, party) %>% 
+  inner_join(case_parties %>% select(case_code, name, party_side), 
+             by = c("case_code")) %>% 
+  filter(party == name & party_side == "Plaintiff") %>% 
+  datatable(options = list(columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+```
+
+### The frequencies below are for case_types where only Plaintiffs are listed.
+
+``` {r }
+judgments %>%
+  filter(!is.na(party)) %>% 
+  select(case_code, case_type, decision, party) %>% 
+  inner_join(case_parties %>% select(case_code, name, party_side), 
+             by = c("case_code")) %>% 
+  filter(party == name & party_side == "Plaintiff") %>% 
+  group_by(case_type) %>%
+  summarise(n=n()) %>%
+  arrange(desc(n)) %>%
+  datatable(options = list(columnDefs = list(list(className = 'dt-left', targets = "_all"))))
+```
