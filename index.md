@@ -1,6 +1,6 @@
 ## Welcome to GitHub Pages
 
-[Creating the FTA First Hearing Variable](index/FTA_First_Hearing_Variable.Rmd) 
+[Creating the FTA First Hearing Variable](FTA_First_Hearing_Variable.Rmd) 
 
 You can use the [editor on GitHub](https://github.com/devinmacarthur/OREvictions_FLATFILE/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
 
