@@ -22,7 +22,7 @@ There is a variable in the judgments table called party, but it is not clear whe
 
 If we join the judgments table to the case_parties table, we can compare name from case_parties and party from judgments to see whether the party from judgments is referencing the Plaintiff or Defendant.   
 
-### The following table is a smaple of cases where name from case_parties and party from judgments are the same.
+### The following table is a sample of cases where name from case_parties and party from judgments are the same.
 
 ``` {r }
 judgments %>%
